@@ -30,13 +30,12 @@
     package:
       name: "{{ dhcppkgs }}"
       state: present
-    when: not staticips
 
   - name: Install additional package for Intel platforms
     package:
       name: "{{ syslinuxpkgs }}"
       state: present
-    when: not staticips and not ppc64le
+    when: not ppc64le
 
   - name: Write out dhcp file
     template:
@@ -185,18 +184,17 @@
       mode: 0755
     notify:
       - restart tftp
-    when: not staticips and not ppc64le
+    when: not ppc64le
 
   - name: generate netboot entry for grub2
     shell: grub2-mknetdir --net-directory=/var/lib/tftpboot
-    when: not staticips and ppc64le
+    when: ppc64le
 
   - name: Create TFTP RHCOS dir
     file:
       path: /var/lib/tftpboot/rhcos
       state: directory
       mode: 0755
-    when: not staticips
 
   - name: SEBool allow haproxy connect any port
     seboolean:
@@ -208,21 +206,19 @@
 
   - name: Copy over files needed for TFTP
     shell: "cp -a /usr/share/syslinux/* /var/lib/tftpboot"
-    when: not staticips and not ppc64le
+    when: not ppc64le
 
   - name: Downloading OCP4 installer initramfs
     get_url:
       url: "{{ ocp_initramfs }}"
       dest: /var/lib/tftpboot/rhcos/initramfs.img
       mode: 0555
-    when: not staticips
 
   - name: Downloading OCP4 installer kernel
     get_url:
       url: "{{ ocp_install_kernel }}"
       dest: /var/lib/tftpboot/rhcos/kernel
       mode: 0555
-    when: not staticips
 
   - name: Generate pxe config files
     block:
@@ -263,7 +259,7 @@
       when:
         - workers is defined
         - workers | length > 0
-    when: not staticips and not ppc64le
+    when: not ppc64le
 
   - name: Generate grub2 config files
     block:
@@ -297,7 +293,7 @@
       when:
         - workers is defined
         - workers | length > 0
-    when: not staticips and ppc64le
+    when: ppc64le
 
 
   - name: Installing TFTP Systemd helper
@@ -305,19 +301,16 @@
       src: ../files/start-tftp.sh
       dest: /usr/local/bin/start-tftp.sh
       mode: '0555'
-    when: not staticips
 
   - name: Installing TFTP Systemd unit file
     copy:
       src: ../files/helper-tftp.service
       dest: /etc/systemd/system/helper-tftp.service
       mode: '0655'
-    when: not staticips
 
   - name: Systemd daemon reload
     systemd:
       daemon_reload: yes
-    when: not staticips
 
   - name: Starting services
     service:
@@ -333,10 +326,8 @@
       enabled: yes
       state: started
     with_items:
-      - dhcpd
       - tftp
       - helper-tftp
-    when: not staticips
 
   - name: Unmasking Services
     systemd:
@@ -345,7 +336,6 @@
       masked: no
     with_items:
       - tftp
-    when: not staticips
 
   - name: Copy info script over
     template:
