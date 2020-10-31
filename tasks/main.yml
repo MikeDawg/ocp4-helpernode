@@ -125,12 +125,6 @@
       dest: /var/www/html/install/bios.raw.gz
       mode: 0555
 
-  - name: Downloading OCP4 installer rootfs
-    get_url:
-      url: "{{ ocp_rootfs }}"
-      dest: /var/lib/tftpboot/rhcos/rootfs.img
-      mode: 0555
-      
   - name: Start firewalld service
     systemd:
       name: firewalld
@@ -230,6 +224,14 @@
       dest: /var/lib/tftpboot/rhcos/kernel
       mode: 0555
     when: not staticips
+
+  - name: Downloading OCP4 installer rootfs
+    get_url:
+      url: "{{ ocp_rootfs }}"
+      dest: /var/lib/tftpboot/rhcos/rootfs.img
+      mode: 0555
+    when: not staticips
+
 
   - name: Generate pxe config files
     block:
