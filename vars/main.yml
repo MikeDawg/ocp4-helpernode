@@ -12,8 +12,6 @@ ocp_rootfs: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.
 helm_source: "https://get.helm.sh/helm-v3.2.4-linux-amd64.tar.gz"
 chars: (\\_|\\$|\\\|\\/|\\=|\\)|\\(|\\&|\\^|\\%|\\$|\\#|\\@|\\!|\\*)
 ppc64le: false
-chronyconfig:
-  enabled: false
 setup_registry:
   deploy: false
   autosync_registry: false
