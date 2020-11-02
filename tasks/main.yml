@@ -117,6 +117,7 @@
       - "/var/lib/tftpboot/rhcos/initramfs.img"
       - "/var/lib/tftpboot/rhcos/kernel"
       - "/var/lib/tftpboot/rhcos/rootfs.img"
+      - "/var/www/html/install/rootfs.img"
     when: force_ocp_download
 
   - name: Downloading OCP4 installer Bios
@@ -231,6 +232,12 @@
       dest: /var/lib/tftpboot/rhcos/rootfs.img
       mode: 0555
     when: not staticips
+
+  - name: Download OCP4 Installer rootfs
+    get_url:
+      url: "{{ ocp_rootfs }}"
+      dest: "/var/www/html/install/rootfs.img"
+      mode: 0555
 
   - name: Generate pxe config files
     block:
