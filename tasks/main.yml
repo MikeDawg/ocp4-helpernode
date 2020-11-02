@@ -274,6 +274,11 @@
       - not staticips
       - not ppc64le
 
+  - name: Generate grub2 directory
+    file: 
+      path: "/var/lib/tftpboot/boot/grub2"
+      mode: 0755
+      
   - name: Generate grub2 config files
     block:
     - name: create grub.cfg
