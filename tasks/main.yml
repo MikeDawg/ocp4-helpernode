@@ -108,8 +108,8 @@
 
   - name: Delete OCP4 files, if requested, to download again
     file:
-       state: absent
-       path: "{{ item }}"
+      state: absent
+      path: "{{ item }}"
     with_items:
       - "/usr/local/src/openshift-client-linux.tar.gz"
       - "/usr/local/src/openshift-install-linux.tar.gz"
@@ -232,7 +232,6 @@
       mode: 0555
     when: not staticips
 
-
   - name: Generate pxe config files
     block:
     - name: Set the default tftp file
@@ -244,35 +243,36 @@
       notify:
         - restart tftp
 
-    - name: Set the bootstrap specific tftp file
-      template:
-        src: ../templates/pxe-bootstrap.j2
-        dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ bootstrap.macaddr | lower | regex_replace (':', '-')}}"
-        mode: 0555
-      notify:
-        - restart tftp
+  - name: Set the bootstrap specific tftp file
+    template:
+      src: ../templates/pxe-bootstrap.j2
+      dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ bootstrap.macaddr | lower | regex_replace (':', '-')}}"
+      mode: 0555
+    notify:
+      - restart tftp
 
-    - name: Set the master specific tftp files
-      template:
-        src: ../templates/pxe-master.j2
-        dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
-        mode: 0555
-      with_items: "{{ masters | lower }}"
-      notify:
-        - restart tftp
+  - name: Set the master specific tftp files
+    template:
+      src: ../templates/pxe-master.j2
+      dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
+      mode: 0555
+    with_items: "{{ masters | lower }}"
+    notify:
+      - restart tftp
 
-    - name: Set the worker specific tftp files
-      template:
-        src: ../templates/pxe-worker.j2
-        dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
-        mode: 0555
-      with_items: "{{ workers | lower }}"
-      notify:
-        - restart tftp
-      when:
-        - workers is defined
-        - workers | length > 0
-    when: not staticips and not ppc64le
+  - name: Set the worker specific tftp files
+    template:
+      src: ../templates/pxe-worker.j2
+      dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
+      mode: 0555
+    with_items: "{{ workers | lower }}"
+    notify:
+      - restart tftp
+    when:
+      - workers is defined
+      - workers | length > 0
+      - not staticips
+      - not ppc64le
 
   - name: Generate grub2 config files
     block:
@@ -284,30 +284,30 @@
           fallback=1
           timeout=1
 
-    - name: generate grub entry (bootstrap)
-      vars:
-        role: bootstrap
-        mac: "{{ bootstrap.macaddr }}"
-      include_tasks: generate_grub.yml
+  - name: generate grub entry (bootstrap)
+    vars:
+      role: bootstrap
+      mac: "{{ bootstrap.macaddr }}"
+    include_tasks: generate_grub.yml
 
-    - name: generate grub entry (masters)
-      vars:
-        role: master
-        mac: "{{ item.macaddr }}"
-      include_tasks: generate_grub.yml
-      with_items: "{{ masters }}"
+  - name: generate grub entry (masters)
+    vars:
+      role: master
+      mac: "{{ item.macaddr }}"
+    include_tasks: generate_grub.yml
+    with_items: "{{ masters }}"
 
-    - name: generate grub entry (workers)
-      vars:
-        role: worker
-        mac: "{{ item.macaddr }}"
-      include_tasks: generate_grub.yml
-      with_items: "{{ workers }}"
-      when:
-        - workers is defined
-        - workers | length > 0
-    when: not staticips and ppc64le
-
+  - name: generate grub entry (workers)
+    vars:
+      role: worker
+      mac: "{{ item.macaddr }}"
+    include_tasks: generate_grub.yml
+    with_items: "{{ workers }}"
+    when:
+      - workers is defined
+      - workers | length > 0
+      - not staticips
+      - ppc64le
 
   - name: Installing TFTP Systemd helper
     copy:
@@ -409,32 +409,32 @@
         path: ../machineconfig
         state: directory
 
-    - name: Create temporary chrony.conf file
-      template:
-        src: ../templates/chrony.conf.j2
-        dest: /tmp/chrony.conf.tmp
+  - name: Create temporary chrony.conf file
+    template:
+      src: ../templates/chrony.conf.j2
+      dest: /tmp/chrony.conf.tmp
 
-    - name: slurp contents of temporary chrony.conf file
-      slurp:
-        src: /tmp/chrony.conf.tmp
+  - name: slurp contents of temporary chrony.conf file
+    slurp:
+      src: /tmp/chrony.conf.tmp
       register: chronybase64
 
-    - name: Generate Chrony machineconfig
-      template:
-        src: ../templates/chrony-machineconfig.j2
-        dest: ../machineconfig/99-{{item}}-chrony-configuration.yaml
-      loop: 
-        - master
-    - name: Generate Chrony machineconfig
-      template:
-        src: ../templates/chrony-machineconfig.j2
-        dest: ../machineconfig/99-{{item}}-chrony-configuration.yaml
-      loop: 
-        - worker
-      when:
-        - workers is defined
-        - workers | length > 0
-    when: chronyconfig.enabled
+  - name: Generate Chrony machineconfig
+    template:
+      src: ../templates/chrony-machineconfig.j2
+      dest: ../machineconfig/99-{{item}}-chrony-configuration.yaml
+    loop: 
+      - master
+
+  - name: Generate Chrony machineconfig
+    template:
+      src: ../templates/chrony-machineconfig.j2
+      dest: ../machineconfig/99-{{item}}-chrony-configuration.yaml
+    loop: 
+      - worker
+    when:
+      - workers is defined
+      - workers | length > 0
 
   - name: Downloading OCP4 client
     get_url:
@@ -491,7 +491,7 @@
       mode: '0755'
       remote_src: true
     when: not ppc64le
-    
+
   - name: Copy helm cli to bin directory for ppc64le
     copy:
       src: /usr/local/src/helm/linux-ppc64le/helm
@@ -553,8 +553,8 @@
         name: "{{ registry }}"
         state: present
 
-    - name: Setup Registry
-      import_tasks: setup_registry.yaml
+  - name: Setup Registry
+    import_tasks: setup_registry.yaml
 
   - name: Setup keepalived service
     when: high_availability is defined
